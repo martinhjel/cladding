@@ -1,4 +1,7 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" id="theme-color" content="#E9EBE4">
+<link rel="manifest" href="manifest.webmanifest">
 <title>Glipeplan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1130,6 +1133,8 @@
     var dark = state.theme === "dark";
     btn.setAttribute("aria-pressed", String(dark));
     btn.textContent = dark ? "Lys visning" : "Mørk visning";
+    var meta = $("theme-color");
+    if (meta) meta.setAttribute("content", dark ? "#131614" : "#E9EBE4");
   }
 
   $("theme").addEventListener("click", function () {
@@ -1181,5 +1186,13 @@
   syncNarrowInputs();
   applyTheme();
   render();
+
+  /* Offline-bruk: service workeren finnes bare der appen er hostet som
+     egne filer. Feiler registreringen, kjører siden helt som før. */
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () { /* ok */ });
+    });
+  }
 })();
 </script>
