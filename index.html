@@ -1,0 +1,1185 @@
+<meta charset="utf-8">
+<title>Glipeplan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --ground: #E9EBE4;
+    --surface: #FCFCFA;
+    --surface-2: #F1F3EB;
+    --ink: #1A1F1C;
+    --muted: #656D64;
+    --line: #CBD0C4;
+    --line-hard: #A6AD9E;
+    --accent: #1D4F91;
+    --accent-ink: #1D4F91;
+    --accent-soft: #DDE7F5;
+    --ok: #3F6E36;
+    --bad: #9E3B28;
+    --bad-soft: #F4E1DB;
+    --board: #DFC79A;
+    --board-edge: #B99C63;
+    --board-alt: #C9AE72;
+    --lekt: #B98F55;
+    --lekt-edge: #8A6634;
+    --fixed: #C9CCC2;
+    --fixed-edge: #9AA093;
+    --shade: rgba(0,0,0,.18);
+    --shadow: 0 1px 2px rgba(26,31,28,.05), 0 10px 26px -18px rgba(26,31,28,.45);
+  }
+  :root[data-theme="dark"] {
+    --ground: #131614;
+    --surface: #1B1F1C;
+    --surface-2: #232823;
+    --ink: #E7EAE3;
+    --muted: #98A197;
+    --line: #333A34;
+    --line-hard: #566056;
+    --accent: #8CB8EE;
+    --accent-ink: #A9CCF7;
+    --accent-soft: #1E2C3D;
+    --ok: #85C06D;
+    --bad: #E58C74;
+    --bad-soft: #3A241F;
+    --board: #6B5A38;
+    --board-edge: #A78E5C;
+    --board-alt: #857046;
+    --lekt: #8A6634;
+    --lekt-edge: #C39A5E;
+    --fixed: #2E332E;
+    --fixed-edge: #5D655C;
+    --shade: rgba(0,0,0,.45);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 26px -18px rgba(0,0,0,.9);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: clamp(1.25rem, 4vw, 2.75rem) clamp(1rem, 4vw, 2rem) 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  h1 {
+    font-family: Archivo, system-ui, sans-serif;
+    font-weight: 700;
+    font-size: clamp(2.1rem, 8vw, 3rem);
+    letter-spacing: -.02em;
+    line-height: 1;
+    margin: .35rem 0 .5rem;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 0;
+    max-width: 34rem;
+    color: var(--muted);
+  }
+
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .theme-toggle {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .06em;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--line-hard);
+    border-radius: 2px;
+    padding: .4rem .7rem;
+    min-height: 2.25rem;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--ink); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: clamp(1rem, 3.5vw, 1.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  h2 {
+    font-family: Archivo, system-ui, sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    margin: 0;
+  }
+
+  .field { display: flex; flex-direction: column; gap: .45rem; }
+
+  label, .field-label {
+    font-size: .8rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .hint {
+    font-size: .78rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  input[type="number"], input[type="text"] {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 1.15rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--line-hard);
+    border-radius: 3px;
+    padding: .7rem .8rem;
+    width: 100%;
+    min-height: 3rem;
+  }
+  input:focus-visible, button:focus-visible, summary:focus-visible, tr:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .seg {
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+  }
+  .seg button {
+    flex: 1 1 auto;
+    min-height: 3rem;
+    min-width: 5.5rem;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: .95rem;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--line-hard);
+    border-radius: 3px;
+    padding: .5rem .7rem;
+    cursor: pointer;
+  }
+  .seg button .sub {
+    display: block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .72rem;
+    color: var(--muted);
+  }
+  .seg button[aria-pressed="true"] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .seg button[aria-pressed="true"] .sub { color: var(--accent-ink); }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 1rem;
+  }
+
+  details.adv {
+    border-top: 1px solid var(--line);
+    padding-top: .9rem;
+  }
+  details.adv summary {
+    cursor: pointer;
+    font-size: .82rem;
+    font-weight: 500;
+    color: var(--accent-ink);
+    list-style: none;
+  }
+  details.adv summary::-webkit-details-marker { display: none; }
+  details.adv summary::before { content: "+ "; font-family: "IBM Plex Mono", monospace; }
+  details.adv[open] summary::before { content: "– "; }
+  details.adv .grid-2 { margin-top: 1rem; }
+
+  /* Result */
+  .result { gap: 1.25rem; }
+  .headline {
+    display: flex;
+    align-items: baseline;
+    gap: .6rem;
+    flex-wrap: wrap;
+  }
+  .headline .num {
+    font-family: Archivo, sans-serif;
+    font-weight: 700;
+    font-size: clamp(2.6rem, 12vw, 4rem);
+    line-height: .95;
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .headline .unit {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 1rem;
+    color: var(--muted);
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .stat {
+    background: var(--surface);
+    padding: .7rem .8rem;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+  }
+  .stat dt {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .68rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stat dd {
+    margin: 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 1.05rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .74rem;
+    letter-spacing: .04em;
+    padding: .25rem .55rem;
+    border-radius: 2px;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+  }
+  .pill.ok { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+  .pill.bad { background: var(--bad-soft); color: var(--bad); }
+
+  .alert {
+    background: var(--bad-soft);
+    border-left: 3px solid var(--bad);
+    padding: .85rem 1rem;
+    border-radius: 2px;
+    font-size: .92rem;
+  }
+  .alert strong { display: block; margin-bottom: .2rem; }
+
+  .fixes {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    margin-top: .9rem;
+  }
+  .fixes button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .8rem;
+    text-align: left;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: .88rem;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line-hard);
+    border-radius: 3px;
+    padding: .6rem .75rem;
+    min-height: 2.75rem;
+    cursor: pointer;
+  }
+  .fixes button:hover { border-color: var(--accent); }
+  .fixes button .num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .82rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  figure { margin: 0; display: flex; flex-direction: column; gap: .5rem; }
+  figcaption {
+    font-size: .78rem;
+    color: var(--muted);
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .draw {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: .75rem;
+    overflow-x: auto;
+  }
+  .draw svg { display: block; width: 100%; }
+  #elev svg { height: 140px; }
+
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .scroll { overflow-x: auto; }
+  th, td {
+    text-align: right;
+    padding: .5rem .6rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .88rem;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  th {
+    font-size: .68rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--line-hard);
+  }
+  th:first-child, td:first-child { text-align: left; }
+  tbody tr:last-child td, tbody tr:last-child th { border-bottom: none; }
+  tbody th {
+    font-size: .88rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink);
+    border-bottom: 1px solid var(--line);
+  }
+
+  table.alts tbody tr { cursor: pointer; }
+  table.alts tbody tr:hover { background: var(--surface-2); }
+  table.alts tbody tr[aria-selected="true"] {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+  }
+  table.alts td:first-child { font-weight: 600; }
+  tbody tr.narrow-row th, tbody tr.narrow-row td { color: var(--accent-ink); }
+
+  footer {
+    font-size: .8rem;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+    padding-top: 1rem;
+  }
+  footer p { margin: 0 0 .5rem; }
+  footer p:last-child { margin-bottom: 0; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="header-row">
+      <p class="eyebrow">Lektekledning</p>
+      <button type="button" id="theme" class="theme-toggle" aria-pressed="false">Mørk visning</button>
+    </div>
+    <h1>Glipeplan</h1>
+    <p class="lede">Legg inn avstanden mellom to faste bord, så deler appen opp resten: like glipper, riktig senteravstand og ferdig utmålte merkepunkter.</p>
+  </header>
+
+  <section class="card" aria-labelledby="mal-h">
+    <h2 id="mal-h">Målet på veggen</h2>
+
+    <div class="field">
+      <span class="field-label" id="mode-l">Hvordan er avstanden målt?</span>
+      <div class="seg" role="group" aria-labelledby="mode-l" id="mode">
+        <button type="button" data-mode="cc" aria-pressed="true">Senter–senter<span class="sub">midt på bord</span></button>
+        <button type="button" data-mode="clear" aria-pressed="false">Lysåpning<span class="sub">kant til kant</span></button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="span">Avstand mellom de to bordene (mm)</label>
+      <input id="span" type="number" inputmode="decimal" step="1" min="1" value="2400">
+      <p class="hint" id="span-hint">Fra midten av det ene bordet til midten av det andre.</p>
+    </div>
+
+    <div class="field">
+      <span class="field-label" id="bw-l">Underbord</span>
+      <div class="seg" role="group" aria-labelledby="bw-l" id="bw">
+        <button type="button" data-w="173" aria-pressed="true">7 tommer<span class="sub">173 mm</span></button>
+        <button type="button" data-w="148" aria-pressed="false">6 tommer<span class="sub">148 mm</span></button>
+        <button type="button" data-w="custom" aria-pressed="false">Eget mål<span class="sub">mm</span></button>
+      </div>
+    </div>
+
+    <div class="field" id="bw-custom-field" hidden>
+      <label for="bw-custom">Bredde på underbord (mm)</label>
+      <input id="bw-custom" type="number" inputmode="decimal" step="1" min="20" value="173">
+    </div>
+
+    <div class="field">
+      <span class="field-label" id="nb-l">Kløyve noen bord smalere?</span>
+      <div class="seg" role="group" aria-labelledby="nb-l" id="nb">
+        <button type="button" data-n="off" aria-pressed="true">Nei<span class="sub">alle like brede</span></button>
+        <button type="button" data-n="on" aria-pressed="false">Ja<span class="sub">bland inn smale</span></button>
+      </div>
+    </div>
+
+    <div class="field" id="nb-field" hidden>
+      <label for="nb-width">Bredde på de smale bordene (mm)</label>
+      <input id="nb-width" type="number" inputmode="decimal" step="1" min="20" value="120">
+      <p class="hint">Appen finner hvor mange smale bord som trengs, og hvor de bør stå.</p>
+    </div>
+
+    <div class="field">
+      <span class="field-label" id="ow-l">Overbord</span>
+      <div class="seg" role="group" aria-labelledby="ow-l" id="ow">
+        <button type="button" data-o="48" aria-pressed="true">2 tommer<span class="sub">48 mm</span></button>
+        <button type="button" data-o="73" aria-pressed="false">3 tommer<span class="sub">73 mm</span></button>
+        <button type="button" data-o="custom" aria-pressed="false">Eget mål<span class="sub">mm</span></button>
+      </div>
+      <p class="hint" id="range-hint"></p>
+    </div>
+
+    <div class="field" id="ow-custom-field" hidden>
+      <label for="ow-custom">Bredde på overbord (mm)</label>
+      <input id="ow-custom" type="number" inputmode="decimal" step="1" min="10" value="48">
+    </div>
+
+    <details class="adv">
+      <summary>Krav til dekking og glipe</summary>
+      <div class="grid-2">
+        <div class="field">
+          <label for="cover">Min. dekking per side (mm)</label>
+          <input id="cover" type="number" inputmode="decimal" step="1" min="0" value="15">
+        </div>
+        <div class="field">
+          <label for="ming">Minste glipe (mm)</label>
+          <input id="ming" type="number" inputmode="decimal" step="1" min="0" value="10">
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="card result" aria-labelledby="res-h" aria-live="polite">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+      <h2 id="res-h">Glipe mellom bordene</h2>
+      <span class="pill" id="verdict">–</span>
+    </div>
+
+    <div id="fail" hidden></div>
+
+    <div id="ok-block">
+      <div class="headline">
+        <span class="num" id="gap-num">–</span>
+        <span class="unit">mm glipe</span>
+      </div>
+
+      <dl class="stats" style="margin:1.1rem 0 0">
+        <div class="stat"><dt>Bord mellom</dt><dd id="s-count">–</dd></div>
+        <div class="stat"><dt>Senteravstand</dt><dd id="s-cc">–</dd></div>
+        <div class="stat"><dt>Dekking / side</dt><dd id="s-cover">–</dd></div>
+        <div class="stat" id="stat-narrow" hidden><dt>Smale bord</dt><dd id="s-narrow">–</dd></div>
+        <div class="stat"><dt>Sum kontroll</dt><dd id="s-sum">–</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="fig-h">
+    <h2 id="fig-h">Slik ser veggen ut</h2>
+    <figure>
+      <div class="draw" id="elev"></div>
+      <figcaption id="elev-cap">–</figcaption>
+    </figure>
+    <figure>
+      <div class="draw" id="detail"></div>
+      <figcaption>Snitt gjennom én glipe, tegnet i målestokk med 19 mm tykke bord. Overbordet må ligge minst det oppgitte målet inn på underbordet i hver side.</figcaption>
+    </figure>
+  </section>
+
+  <section class="card" aria-labelledby="mark-h">
+    <h2 id="mark-h">Merkepunkter</h2>
+    <p class="hint" id="mark-hint">Mål fortløpende fra startbordet – ikke fra bord til bord, da samler feilen seg opp.</p>
+    <div class="scroll">
+      <table id="marks">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="alt-h">
+    <h2 id="alt-h">Mulige oppdelinger</h2>
+    <p class="hint">Alle antall bord som holder seg innenfor kravene. Trykk på en rad for å regne med den.</p>
+    <div class="scroll">
+      <table class="alts" id="alts">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>Lysåpning</strong> er den frie avstanden mellom de to faste bordene. <strong>Senter–senter</strong> måles fra midten av det ene til midten av det andre, og forutsetter at de faste bordene er like brede som resten.</p>
+    <p>Største tillatte glipe = bredde på overbord − 2 × dekking. Trenger du større glipe, må du opp i bredde på overbordet.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var EPS = 1e-6;
+  var state = {
+    mode: "cc",
+    span: 2400,
+    boardPreset: "173",
+    boardCustom: 173,
+    overPreset: "48",
+    overCustom: 48,
+    cover: 15,
+    minGap: 10,
+    narrow: false,
+    narrowWidth: 120,
+    theme: "light",
+    pick: null // valgt antall bord, null = anbefalt
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function num(v, fallback) {
+    var n = parseFloat(String(v).replace(",", "."));
+    return isFinite(n) ? n : fallback;
+  }
+
+  function fmt(x, d) {
+    d = d === undefined ? 1 : d;
+    return x.toLocaleString("nb-NO", { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+
+  function boardWidth() {
+    return state.boardPreset === "custom" ? state.boardCustom : parseFloat(state.boardPreset);
+  }
+
+  function overWidth() {
+    return state.overPreset === "custom" ? state.overCustom : parseFloat(state.overPreset);
+  }
+
+  /* ---------- Beregning ---------- */
+
+  /* Plasserer de smale bordene. Ett smalt bord settes ytterst, to settes ett i
+     hver ende – da blir veggen symmetrisk og forskjellen havner der hjørne- og
+     vindusbord uansett bryter rytmen. Flere enn to fordeles jevnt utover. */
+  function layout(n1, n2, b, b2) {
+    var total = n1 + n2, w = [], i;
+    for (i = 0; i < total; i++) w.push(b);
+    if (n2 === 0) return w;
+    if (n1 === 0) { for (i = 0; i < total; i++) w[i] = b2; return w; }
+    if (n2 === 1) { w[total - 1] = b2; return w; }
+    if (n2 === 2) { w[0] = b2; w[total - 1] = b2; return w; }
+    for (i = 0; i < n2; i++) {
+      var pos = Math.min(total - 1, Math.round((i + 0.5) * total / n2));
+      while (pos < total && w[pos] === b2) pos++;
+      if (pos >= total) { pos = total - 1; while (pos >= 0 && w[pos] === b2) pos--; }
+      if (pos >= 0) w[pos] = b2;
+    }
+    return w;
+  }
+
+  /* Bordene ligger etter hverandre med lik glipe, første glipe helt i starten. */
+  function positions(widths, g) {
+    var arr = [], x = g;
+    for (var i = 0; i < widths.length; i++) {
+      arr.push({ left: x, w: widths[i] });
+      x += widths[i] + g;
+    }
+    return arr;
+  }
+
+  function compute() {
+    var b = boardWidth();
+    var o = overWidth();
+    var c = state.cover;
+    var minG = state.minGap;
+    var maxG = o - 2 * c;
+    var b2 = state.narrowWidth;
+    var useNarrow = state.narrow && b2 > 0 && b2 < b;
+
+    // Lysåpning: fri avstand mellom de to faste bordene.
+    var clear = state.mode === "cc" ? state.span - b : state.span;
+
+    var options = [];
+    if (b > 0 && clear > 0 && maxG >= minG) {
+      var maxN1 = Math.floor(clear / b) + 1;
+      for (var n1 = 0; n1 <= maxN1; n1++) {
+        var rest = clear - n1 * b;
+        var maxN2 = useNarrow && rest > 0 ? Math.floor(rest / b2) + 1 : 0;
+        for (var n2 = 0; n2 <= maxN2; n2++) {
+          var tot = n1 + n2;
+          var g = (clear - n1 * b - n2 * b2) / (tot + 1);
+          if (g < minG - EPS || g > maxG + EPS) continue;
+          // To overbord kan ikke overlappe hverandre oppå det samme smale bordet.
+          if (n2 > 0 && b2 < o - g - EPS) continue;
+          options.push({
+            key: n1 + "/" + n2, n1: n1, n2: n2, n: tot, gap: g,
+            cc: b + g, cover: (o - g) / 2, widths: layout(n1, n2, b, b2), b2: b2
+          });
+        }
+      }
+    }
+
+    // Anbefalt: helst uten kløyving, ellers færrest mulig smale bord. Innenfor
+    // det velges glipen nærmest midt i det tillatte spennet – den tåler mest
+    // slingring i oppmålingen.
+    var mid = (minG + maxG) / 2;
+    function rank(a) { return [a.n2 === 0 ? 0 : 1, a.n2, Math.abs(a.gap - mid)]; }
+    options.sort(function (a, b_) {
+      var ra = rank(a), rb = rank(b_);
+      for (var i = 0; i < ra.length; i++) if (ra[i] !== rb[i]) return ra[i] - rb[i];
+      return 0;
+    });
+
+    var best = options.length ? options[0] : null;
+    var chosen = best;
+    if (state.pick !== null) {
+      options.forEach(function (opt) { if (opt.key === state.pick) chosen = opt; });
+    }
+
+    return {
+      b: b, o: o, c: c, minG: minG, maxG: maxG, clear: clear, mid: mid,
+      useNarrow: useNarrow, options: options, best: best, chosen: chosen
+    };
+  }
+
+  /* Når ingenting går opp med hele bord: hvor smale må noen bord kløyves?
+     Regner med glipen midt i det tillatte spennet og runder bredden til hele
+     millimeter – glipen flytter seg da under en tidels millimeter. */
+  function ripSuggestions(r) {
+    var b = r.b, o = r.o, clear = r.clear, g = r.mid;
+    var out = [];
+    if (!(b > 0 && clear > 0 && r.maxG >= r.minG)) return out;
+    var floorW = Math.max(o - g, 2 * r.c, 25);
+
+    [1, 2, "alle"].forEach(function (k) {
+      var bestCand = null;
+      for (var n = 1; n <= Math.floor(clear / floorW) + 2; n++) {
+        var cnt = k === "alle" ? n : k;
+        if (cnt > n) continue;
+        var w = (clear - (n - cnt) * b - (n + 1) * g) / cnt;
+        if (w > b - 1 || w < floorW) continue;
+        if (!bestCand || w > bestCand.w) bestCand = { n: n, cnt: cnt, w: w };
+      }
+      if (!bestCand) return;
+
+      // Rund til hele mm, og sjekk at glipen fortsatt er innenfor.
+      var n = bestCand.n, cnt = bestCand.cnt, cands = [Math.round(bestCand.w)];
+      cands.push(cands[0] - 1, cands[0] + 1);
+      for (var i = 0; i < cands.length; i++) {
+        var wr = cands[i];
+        if (wr < floorW || wr > b - 1) continue;
+        var gr = (clear - (n - cnt) * b - cnt * wr) / (n + 1);
+        if (gr < r.minG - EPS || gr > r.maxG + EPS) continue;
+        if (wr < o - gr - EPS) continue;
+        out.push({ k: k, n: n, cnt: cnt, width: wr, gap: gr, n1: n - cnt });
+        return;
+      }
+    });
+    return out;
+  }
+
+  /* ---------- Tegning ---------- */
+
+  var SVGNS = "http://www.w3.org/2000/svg";
+
+  function el(name, attrs) {
+    var node = document.createElementNS(SVGNS, name);
+    for (var k in attrs) node.setAttribute(k, attrs[k]);
+    return node;
+  }
+
+  function drawElevation(r) {
+    var host = $("elev");
+    host.textContent = "";
+    var d = r.chosen;
+    if (!d) return;
+
+    var b = r.b, g = d.gap, n = d.n;
+    var pos = positions(d.widths, g);
+    var inner = d.widths.reduce(function (a, w) { return a + w; }, 0) + (n + 1) * g;
+    var total = 2 * b + inner;
+    var H = 100;
+
+    var svg = el("svg", {
+      viewBox: "0 0 " + total + " " + H,
+      preserveAspectRatio: "none",
+      role: "img",
+      "aria-label": "Oppriss av veggen med " + n + " underbord mellom to faste bord"
+    });
+
+    function board(x, w, fill, edge) {
+      svg.appendChild(el("rect", {
+        x: x, y: 0, width: w, height: H,
+        fill: fill, stroke: edge,
+        "stroke-width": 1,
+        "vector-effect": "non-scaling-stroke"
+      }));
+    }
+
+    // underbord: fast + bordene mellom + fast
+    board(0, b, "var(--fixed)", "var(--fixed-edge)");
+    pos.forEach(function (p) {
+      var narrow = p.w < b - EPS;
+      board(b + p.left, p.w, narrow ? "var(--board-alt)" : "var(--board)", "var(--board-edge)");
+    });
+    board(total - b, b, "var(--fixed)", "var(--fixed-edge)");
+
+    // Overbord over hver glipe. Skyggen til høyre viser at overbordet
+    // står 19 mm ut fra underbordet.
+    var cov = d.cover;
+    var lx = b;
+    for (var j = 0; j <= n; j++) {
+      svg.appendChild(el("rect", {
+        x: lx - cov + r.o, y: 6, width: 19, height: H - 12,
+        fill: "var(--shade)"
+      }));
+      svg.appendChild(el("rect", {
+        x: lx - cov, y: 6, width: r.o, height: H - 12,
+        fill: "var(--lekt)", stroke: "var(--lekt-edge)",
+        "stroke-width": 1, "vector-effect": "non-scaling-stroke"
+      }));
+      lx += g + (j < n ? d.widths[j] : 0);
+    }
+
+    host.appendChild(svg);
+    $("elev-cap").textContent =
+      n + " underbord mellom" + (d.n2 ? " (" + d.n2 + " kløyvd til " + fmt(d.b2, 0) + " mm)" : "") +
+      " · " + (n + 1) + " overbord · total bredde " +
+      fmt(total, 0) + " mm (inkl. de to faste bordene)";
+  }
+
+  function drawDetail(r) {
+    var host = $("detail");
+    host.textContent = "";
+    var d = r.chosen;
+    if (!d) return;
+
+    var g = d.gap, cov = d.cover, o = r.o;
+    var stub = Math.max(55, o);           // synlig del av underbordet
+    var W = stub * 2 + g;
+    var H = 78;
+    var fs = W * 0.045;
+
+    var svg = el("svg", {
+      viewBox: "0 0 " + W + " " + H,
+      role: "img",
+      "aria-label": "Snitt: glipe " + fmt(g) + " millimeter, dekking " + fmt(cov) + " millimeter per side"
+    });
+    svg.style.maxHeight = "220px";
+
+    var T = 19;             // bordtykkelse, mm – snittet er i samme målestokk som breddene
+    var yU = 34, hU = T;    // underbord
+    var yO = yU - T, hO = T;// overbord, ligger oppå underbordet
+
+    [0, stub + g].forEach(function (bx) {
+      svg.appendChild(el("rect", {
+        x: bx, y: yU, width: stub, height: hU,
+        fill: "var(--board)", stroke: "var(--board-edge)",
+        "stroke-width": 1.2, "vector-effect": "non-scaling-stroke"
+      }));
+    });
+
+    svg.appendChild(el("rect", {
+      x: stub - cov, y: yO, width: o, height: hO,
+      fill: "var(--lekt)", stroke: "var(--lekt-edge)",
+      "stroke-width": 1.2, "vector-effect": "non-scaling-stroke"
+    }));
+
+    function line(x1, y1, x2, y2, color, dash) {
+      var a = { x1: x1, y1: y1, x2: x2, y2: y2, stroke: color || "var(--line-hard)", "stroke-width": 1, "vector-effect": "non-scaling-stroke" };
+      if (dash) a["stroke-dasharray"] = "3 3";
+      svg.appendChild(el("line", a));
+    }
+
+    function label(x, y, text, anchor, color) {
+      var t = el("text", {
+        x: x, y: y, "text-anchor": anchor || "middle",
+        "font-family": "IBM Plex Mono, monospace",
+        "font-size": fs, fill: color || "var(--ink)"
+      });
+      t.textContent = text;
+      svg.appendChild(t);
+    }
+
+    // glipemål under bordene
+    var yD = yU + hU + 10;
+    line(stub, yU + hU, stub, yD + 3, "var(--accent)");
+    line(stub + g, yU + hU, stub + g, yD + 3, "var(--accent)");
+    line(stub, yD, stub + g, yD, "var(--accent)");
+    label(stub + g / 2, yD + fs + 3, "glipe " + fmt(g) + " mm", "middle", "var(--accent-ink)");
+
+    // dekking, markert i venstre overlapp
+    line(stub - cov, yO, stub - cov, yU + hU + 2, "var(--accent)", true);
+    line(stub, yO, stub, yU, "var(--accent)", true);
+    line(stub - cov, yO - 5, stub, yO - 5, "var(--accent)");
+    label(stub - cov - 3, yO - 5 + fs * 0.35, "dekking " + fmt(cov) + " mm", "end", "var(--accent-ink)");
+
+    host.appendChild(svg);
+  }
+
+  /* ---------- Tabeller ---------- */
+
+  function head(table, labels) {
+    var thead = table.querySelector("thead");
+    thead.textContent = "";
+    var tr = document.createElement("tr");
+    labels.forEach(function (t) {
+      var th = document.createElement("th");
+      th.scope = "col";
+      th.textContent = t;
+      tr.appendChild(th);
+    });
+    thead.appendChild(tr);
+  }
+
+  function fullRow(body, text, cols) {
+    var tr = document.createElement("tr");
+    var td = document.createElement("td");
+    td.colSpan = cols;
+    td.style.textAlign = "left";
+    td.style.whiteSpace = "normal";
+    td.textContent = text;
+    tr.appendChild(td);
+    body.appendChild(tr);
+  }
+
+  function renderMarks(r) {
+    var table = $("marks");
+    var body = table.querySelector("tbody");
+    body.textContent = "";
+    var d = r.chosen;
+    var mixed = d && d.n2 > 0;
+
+    head(table, mixed
+      ? ["Bord", "Bredde", "Venstre kant", "Senter", "Høyre kant"]
+      : ["Bord", "Venstre kant", "Senter", "Høyre kant"]);
+
+    if (!d) return;
+    if (d.n === 0) {
+      fullRow(body, "Ingen bord mellom – de to faste bordene står med én glipe imellom.", 4);
+      return;
+    }
+
+    positions(d.widths, d.gap).forEach(function (p, i) {
+      var row = document.createElement("tr");
+      var cells = [String(i + 1)];
+      if (mixed) cells.push(fmt(p.w));
+      cells.push(fmt(p.left), fmt(p.left + p.w / 2), fmt(p.left + p.w));
+      cells.forEach(function (v, k) {
+        var cell = document.createElement(k === 0 ? "th" : "td");
+        if (k === 0) cell.scope = "row";
+        cell.textContent = v;
+        row.appendChild(cell);
+      });
+      if (mixed && p.w < r.b - EPS) row.className = "narrow-row";
+      body.appendChild(row);
+    });
+  }
+
+  function renderAlts(r) {
+    var table = $("alts");
+    var body = table.querySelector("tbody");
+    body.textContent = "";
+
+    var anyNarrow = r.options.some(function (o) { return o.n2 > 0; });
+    var labels = ["Bord"];
+    if (anyNarrow) labels.push("Herav smale");
+    labels.push("Glipe", "Senteravstand", "Dekking/side");
+    head(table, labels);
+
+    if (!r.options.length) {
+      fullRow(body, "Ingen løsninger innenfor kravene.", labels.length);
+      return;
+    }
+
+    r.options.slice(0, 14).forEach(function (opt) {
+      var row = document.createElement("tr");
+      row.tabIndex = 0;
+      row.setAttribute("aria-selected", r.chosen && opt.key === r.chosen.key ? "true" : "false");
+      var cells = [opt.n + (r.best && opt.key === r.best.key ? " anbefalt" : "")];
+      if (anyNarrow) cells.push(opt.n2 ? opt.n2 + " × " + fmt(opt.b2, 0) + " mm" : "–");
+      cells.push(fmt(opt.gap) + " mm", opt.n2 ? "varierer" : fmt(opt.cc) + " mm", fmt(opt.cover) + " mm");
+      cells.forEach(function (v, k) {
+        var cell = document.createElement(k === 0 ? "th" : "td");
+        if (k === 0) cell.scope = "row";
+        cell.textContent = v;
+        row.appendChild(cell);
+      });
+      function choose() { state.pick = opt.key; save(); render(); }
+      row.addEventListener("click", choose);
+      row.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); choose(); }
+      });
+      body.appendChild(row);
+    });
+  }
+
+  /* ---------- Render ---------- */
+
+  function placementText(d) {
+    if (!d.n2) return "";
+    if (d.n1 === 0) return "Alle bordene kløyves til samme bredde.";
+    if (d.n2 === 1) return "Det smale bordet står ytterst, inntil bordet i enden.";
+    if (d.n2 === 2) return "Ett smalt bord i hver ende, inntil de faste bordene.";
+    return "De smale bordene er fordelt jevnt utover veggen.";
+  }
+
+  function renderFail(r) {
+    var fail = $("fail");
+    fail.hidden = false;
+    fail.className = "alert";
+    fail.textContent = "";
+
+    var why;
+    if (r.maxG < r.minG) {
+      why = "Kravene motsier hverandre: overbordet på " + fmt(r.o) + " mm gir maks " + fmt(r.maxG) +
+            " mm glipe, men du har satt minste glipe til " + fmt(r.minG) + " mm. " +
+            "Bruk bredere overbord, eller senk kravet til dekking eller minste glipe.";
+    } else if (r.clear <= 0) {
+      why = "Målet må være større enn bredden på ett bord.";
+    } else if (r.useNarrow) {
+      why = "Heller ikke med smale bord på " + fmt(state.narrowWidth, 0) + " mm går det opp. " +
+            "Prøv en annen bredde på de smale bordene, eller et av forslagene under.";
+    } else {
+      why = "Ingen kombinasjon av hele bord gir en glipe mellom " + fmt(r.minG) + " og " + fmt(r.maxG) +
+            " mm på " + fmt(r.clear, 0) + " mm lysåpning. Kløyv noen bord smalere, juster målet " +
+            "noen millimeter, eller bruk et bredere overbord.";
+    }
+
+    var strong = document.createElement("strong");
+    strong.textContent = "Går ikke opp";
+    fail.appendChild(strong);
+    var p = document.createElement("span");
+    p.textContent = why;
+    fail.appendChild(p);
+
+    var fixes = ripSuggestions(r);
+    if (!fixes.length) return;
+
+    var box = document.createElement("div");
+    box.className = "fixes";
+    fixes.forEach(function (f) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      var what = document.createElement("span");
+      what.textContent = f.k === "alle"
+        ? "Kløyv alle " + f.n + " bordene til " + fmt(f.width, 0) + " mm"
+        : "Kløyv " + f.cnt + " bord til " + fmt(f.width, 0) + " mm";
+      var num = document.createElement("span");
+      num.className = "num";
+      num.textContent = f.n + " bord · " + fmt(f.gap) + " mm glipe";
+      btn.appendChild(what);
+      btn.appendChild(num);
+      btn.addEventListener("click", function () {
+        state.narrow = true;
+        state.narrowWidth = f.width;
+        state.pick = f.n1 + "/" + f.cnt;
+        syncNarrowInputs();
+        save();
+        render();
+      });
+      box.appendChild(btn);
+    });
+    fail.appendChild(box);
+  }
+
+  function render() {
+    var r = compute();
+    var d = r.chosen;
+
+    $("range-hint").textContent =
+      "Tillatt glipe: " + fmt(r.minG) + "–" + fmt(r.maxG) + " mm. " +
+      "Største glipe = " + fmt(r.o) + " − 2 × " + fmt(r.c) + ".";
+
+    $("span-hint").textContent = state.mode === "cc"
+      ? "Fra midten av det ene bordet til midten av det andre."
+      : "Fra innerkant på første bord til innerkant på det andre.";
+
+    var okBlock = $("ok-block");
+    var verdict = $("verdict");
+
+    if (!d) {
+      okBlock.hidden = true;
+      renderFail(r);
+      verdict.className = "pill bad";
+      verdict.textContent = "ingen løsning";
+      drawElevation(r); drawDetail(r); renderMarks(r); renderAlts(r);
+      $("elev-cap").textContent = "–";
+      $("mark-hint").textContent = "–";
+      return;
+    }
+
+    $("fail").hidden = true;
+    okBlock.hidden = false;
+
+    $("gap-num").textContent = fmt(d.gap);
+    $("s-count").textContent = d.n + " stk";
+    $("s-cc").textContent = d.n2 ? "varierer" : fmt(d.cc) + " mm";
+    $("s-cover").textContent = fmt(d.cover) + " mm";
+    $("s-sum").textContent = fmt(r.clear, 0) + " mm";
+    $("stat-narrow").hidden = !d.n2;
+    if (d.n2) $("s-narrow").textContent = d.n2 + " × " + fmt(d.b2, 0) + " mm";
+
+    $("mark-hint").textContent = d.n === 0
+      ? "Ingen bord å merke ut."
+      : "Alle mål i mm fra innerkanten på startbordet. Mål fortløpende fra samme punkt – " +
+        "måler du bord for bord, samler feilen seg opp." +
+        (d.n2 ? " " + placementText(d)
+              : " Måler du heller fra senter av startbordet, er senter på bord nr. i lik i × " +
+                fmt(d.cc) + " mm.");
+
+    var isBest = r.best && d.key === r.best.key;
+    verdict.className = "pill " + (isBest ? "ok" : "");
+    verdict.textContent = isBest ? "anbefalt oppdeling" : "valgt av deg";
+
+    drawElevation(r);
+    drawDetail(r);
+    renderMarks(r);
+    renderAlts(r);
+  }
+
+  /* ---------- Lagring ---------- */
+
+  var KEY = "glipeplan.v3";
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ok */ }
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      var saved = JSON.parse(raw);
+      for (var k in state) if (saved[k] !== undefined) state[k] = saved[k];
+    } catch (e) { /* ok */ }
+  }
+
+  /* ---------- Hendelser ---------- */
+
+  function bindSeg(id, handler) {
+    $(id).addEventListener("click", function (e) {
+      var btn = e.target.closest("button");
+      if (!btn) return;
+      Array.prototype.forEach.call(this.querySelectorAll("button"), function (b) {
+        b.setAttribute("aria-pressed", String(b === btn));
+      });
+      handler(btn);
+      state.pick = null;
+      save();
+      render();
+    });
+  }
+
+  bindSeg("mode", function (btn) { state.mode = btn.dataset.mode; });
+  bindSeg("bw", function (btn) {
+    state.boardPreset = btn.dataset.w;
+    $("bw-custom-field").hidden = state.boardPreset !== "custom";
+  });
+  bindSeg("ow", function (btn) {
+    state.overPreset = btn.dataset.o;
+    $("ow-custom-field").hidden = state.overPreset !== "custom";
+  });
+  bindSeg("nb", function (btn) {
+    state.narrow = btn.dataset.n === "on";
+    $("nb-field").hidden = !state.narrow;
+  });
+
+  function syncNarrowInputs() {
+    Array.prototype.forEach.call($("nb").querySelectorAll("button"), function (b) {
+      b.setAttribute("aria-pressed", String((b.dataset.n === "on") === state.narrow));
+    });
+    $("nb-field").hidden = !state.narrow;
+    $("nb-width").value = state.narrowWidth;
+  }
+
+  /* Lys visning er standard; valget huskes i nettleseren. */
+  function applyTheme() {
+    document.documentElement.setAttribute("data-theme", state.theme);
+    var btn = $("theme");
+    var dark = state.theme === "dark";
+    btn.setAttribute("aria-pressed", String(dark));
+    btn.textContent = dark ? "Lys visning" : "Mørk visning";
+  }
+
+  $("theme").addEventListener("click", function () {
+    state.theme = state.theme === "dark" ? "light" : "dark";
+    applyTheme();
+    save();
+  });
+
+  function bindNum(id, key, min) {
+    // Hjulet over et tallfelt endrer verdien i flere nettlesere – lett å gjøre
+    // ved et uhell når du blar på mobil eller nettbrett.
+    $(id).addEventListener("wheel", function () { this.blur(); }, { passive: true });
+    $(id).addEventListener("input", function () {
+      var v = num(this.value, NaN);
+      if (!isFinite(v) || v < min) return;
+      state[key] = v;
+      state.pick = null;
+      save();
+      render();
+    });
+  }
+
+  bindNum("span", "span", 1);
+  bindNum("bw-custom", "boardCustom", 20);
+  bindNum("ow-custom", "overCustom", 10);
+  bindNum("nb-width", "narrowWidth", 20);
+  bindNum("cover", "cover", 0);
+  bindNum("ming", "minGap", 0);
+
+  /* ---------- Oppstart ---------- */
+
+  load();
+  $("span").value = state.span;
+  $("bw-custom").value = state.boardCustom;
+  $("ow-custom").value = state.overCustom;
+  $("cover").value = state.cover;
+  $("ming").value = state.minGap;
+  Array.prototype.forEach.call($("mode").querySelectorAll("button"), function (b) {
+    b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode));
+  });
+  Array.prototype.forEach.call($("bw").querySelectorAll("button"), function (b) {
+    b.setAttribute("aria-pressed", String(b.dataset.w === state.boardPreset));
+  });
+  Array.prototype.forEach.call($("ow").querySelectorAll("button"), function (b) {
+    b.setAttribute("aria-pressed", String(b.dataset.o === state.overPreset));
+  });
+  $("bw-custom-field").hidden = state.boardPreset !== "custom";
+  $("ow-custom-field").hidden = state.overPreset !== "custom";
+  syncNarrowInputs();
+  applyTheme();
+  render();
+})();
+</script>
