@@ -336,6 +336,34 @@
     white-space: nowrap;
   }
 
+  .dim { position: relative; height: 1.9rem; }
+  .dim-bar {
+    position: absolute;
+    top: .7rem;
+    border-top: 1px solid var(--accent);
+  }
+  .dim-bar::before, .dim-bar::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    height: 12px;
+    border-left: 1px solid var(--accent);
+  }
+  .dim-bar::before { left: 0; }
+  .dim-bar::after { right: 0; }
+  .dim-label {
+    position: absolute;
+    left: 50%;
+    top: -.62rem;
+    transform: translateX(-50%);
+    background: var(--surface);
+    padding: 0 .45rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .72rem;
+    color: var(--accent-ink);
+    white-space: nowrap;
+  }
+
   figure { margin: 0; display: flex; flex-direction: column; gap: .5rem; }
   figcaption {
     font-size: .78rem;
@@ -417,7 +445,8 @@
       <span class="field-label" id="mode-l">Hvordan er avstanden målt?</span>
       <div class="seg" role="group" aria-labelledby="mode-l" id="mode">
         <button type="button" data-mode="cc" aria-pressed="true">Senter–senter<span class="sub">midt på bord</span></button>
-        <button type="button" data-mode="clear" aria-pressed="false">Lysåpning<span class="sub">kant til kant</span></button>
+        <button type="button" data-mode="clear" aria-pressed="false">Lysåpning<span class="sub">mellom bordene</span></button>
+        <button type="button" data-mode="outer" aria-pressed="false">Ytterkant<span class="sub">hele bredden</span></button>
       </div>
     </div>
 
@@ -513,6 +542,7 @@
     <h2 id="fig-h">Slik ser veggen ut</h2>
     <figure>
       <div class="draw" id="elev"></div>
+      <div class="dim" id="elev-dim"></div>
       <figcaption id="elev-cap">–</figcaption>
     </figure>
     <figure>
@@ -544,7 +574,7 @@
   </section>
 
   <footer>
-    <p><strong>Lysåpning</strong> er den frie avstanden mellom de to faste bordene. <strong>Senter–senter</strong> måles fra midten av det ene til midten av det andre, og forutsetter at de faste bordene er like brede som resten.</p>
+    <p><strong>Senter–senter</strong> måles fra midten av det ene faste bordet til midten av det andre. <strong>Lysåpning</strong> er den frie avstanden mellom dem. <strong>Ytterkant</strong> er hele bredden, ytterkant til ytterkant, med begge bordene innenfor. Alle tre forutsetter at de faste bordene er like brede som resten.</p>
     <p>Største tillatte glipe = bredde på overbord − 2 × dekking. Trenger du større glipe, må du opp i bredde på overbordet.</p>
   </footer>
 </div>
@@ -629,8 +659,10 @@
     var b2 = state.narrowWidth;
     var useNarrow = state.narrow && b2 > 0 && b2 < b;
 
-    // Lysåpning: fri avstand mellom de to faste bordene.
-    var clear = state.mode === "cc" ? state.span - b : state.span;
+    // Regner alt om til lysåpning: fri avstand mellom de to faste bordene.
+    var clear = state.span;
+    if (state.mode === "cc") clear = state.span - b;
+    else if (state.mode === "outer") clear = state.span - 2 * b;
 
     var options = [];
     if (b > 0 && clear > 0 && maxG >= minG) {
@@ -721,9 +753,19 @@
     return node;
   }
 
+  /* Hvor på tegningen målet ditt er tatt – endepunktene i mm fra venstre
+     ytterkant, og navnet på målemåten. */
+  function dimSpan(total, b) {
+    if (state.mode === "cc") return { a: b / 2, z: total - b / 2, label: "senter–senter" };
+    if (state.mode === "outer") return { a: 0, z: total, label: "ytterkant–ytterkant" };
+    return { a: b, z: total - b, label: "lysåpning" };
+  }
+
   function drawElevation(r) {
     var host = $("elev");
+    var dimHost = $("elev-dim");
     host.textContent = "";
+    dimHost.textContent = "";
     var d = r.chosen;
     if (!d) return;
 
@@ -774,7 +816,28 @@
       lx += g + (j < n ? d.widths[j] : 0);
     }
 
+    // Målet du la inn, markert der det faktisk er tatt.
+    var dim = dimSpan(total, b);
+    [dim.a, dim.z].forEach(function (x) {
+      svg.appendChild(el("line", {
+        x1: x, y1: 0, x2: x, y2: H,
+        stroke: "var(--accent)", "stroke-width": 1,
+        "stroke-dasharray": "4 4", "vector-effect": "non-scaling-stroke"
+      }));
+    });
+
     host.appendChild(svg);
+
+    var bar = document.createElement("div");
+    bar.className = "dim-bar";
+    bar.style.left = (dim.a / total * 100) + "%";
+    bar.style.width = ((dim.z - dim.a) / total * 100) + "%";
+    var lab = document.createElement("span");
+    lab.className = "dim-label";
+    lab.textContent = dim.label + " " + fmt(state.span, 0) + " mm";
+    bar.appendChild(lab);
+    dimHost.appendChild(bar);
+
     $("elev-cap").textContent =
       n + " underbord mellom" + (d.n2 ? " (" + d.n2 + " kløyvd til " + fmt(d.b2, 0) + " mm)" : "") +
       " · " + (n + 1) + " overbord · total bredde " +
@@ -841,11 +904,15 @@
     line(stub, yD, stub + g, yD, "var(--accent)");
     label(stub + g / 2, yD + fs + 3, "glipe " + fmt(g) + " mm", "middle", "var(--accent-ink)");
 
-    // dekking, markert i venstre overlapp
+    // Dekkingen, markert i venstre overlapp. Etiketten står venstrejustert
+    // helt inntil kanten, ellers blir den klippet på smale skjermer.
     line(stub - cov, yO, stub - cov, yU + hU + 2, "var(--accent)", true);
     line(stub, yO, stub, yU, "var(--accent)", true);
-    line(stub - cov, yO - 5, stub, yO - 5, "var(--accent)");
-    label(stub - cov - 3, yO - 5 + fs * 0.35, "dekking " + fmt(cov) + " mm", "end", "var(--accent-ink)");
+    var txt = "dekking " + fmt(cov) + " mm";
+    var yL = yO - 10, yBr = yO - 3;
+    label(1, yL + fs * 0.35, txt, "start", "var(--accent-ink)");
+    line(stub - cov, yBr, stub, yBr, "var(--accent)");
+    line(1 + txt.length * fs * 0.58 + 3, yL, stub - cov / 2, yBr, "var(--accent)");
 
     host.appendChild(svg);
   }
@@ -969,7 +1036,8 @@
             " mm glipe, men du har satt minste glipe til " + fmt(r.minG) + " mm. " +
             "Bruk bredere overbord, eller senk kravet til dekking eller minste glipe.";
     } else if (r.clear <= 0) {
-      why = "Målet må være større enn bredden på ett bord.";
+      why = "Målet er for lite til at det blir noe åpning mellom de faste bordene. " +
+            "Sjekk at du har valgt riktig målemåte over.";
     } else if (r.useNarrow) {
       why = "Heller ikke med smale bord på " + fmt(state.narrowWidth, 0) + " mm går det opp. " +
             "Prøv en annen bredde på de smale bordene, eller et av forslagene under.";
@@ -1024,9 +1092,10 @@
       "Tillatt glipe: " + fmt(r.minG) + "–" + fmt(r.maxG) + " mm. " +
       "Største glipe = " + fmt(r.o) + " − 2 × " + fmt(r.c) + ".";
 
-    $("span-hint").textContent = state.mode === "cc"
-      ? "Fra midten av det ene bordet til midten av det andre."
-      : "Fra innerkant på første bord til innerkant på det andre.";
+    $("span-hint").textContent =
+      state.mode === "cc" ? "Fra midten av det ene bordet til midten av det andre."
+      : state.mode === "outer" ? "Fra ytterkant på det ene bordet til ytterkant på det andre – hele bredden, med begge bordene innenfor."
+      : "Fra innerkant på det ene bordet til innerkant på det andre.";
 
     var okBlock = $("ok-block");
     var verdict = $("verdict");
