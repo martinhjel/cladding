@@ -529,7 +529,7 @@
       </div>
 
       <dl class="stats" style="margin:1.1rem 0 0">
-        <div class="stat"><dt>Bord mellom</dt><dd id="s-count">–</dd></div>
+        <div class="stat"><dt id="s-count-label">Bord mellom</dt><dd id="s-count">–</dd></div>
         <div class="stat"><dt>Senteravstand</dt><dd id="s-cc">–</dd></div>
         <div class="stat"><dt>Dekking / side</dt><dd id="s-cover">–</dd></div>
         <div class="stat" id="stat-narrow" hidden><dt>Smale bord</dt><dd id="s-narrow">–</dd></div>
@@ -640,15 +640,28 @@
     return w;
   }
 
-  /* Bordene ligger etter hverandre med lik glipe, første glipe helt i starten. */
-  function positions(widths, g) {
-    var arr = [], x = g;
-    for (var i = 0; i < widths.length; i++) {
-      arr.push({ left: x, w: widths[i] });
-      x += widths[i] + g;
+  /* Hele bordrekka på veggen: ytterbordet, bordene mellom, og ytterbordet i
+     andre enden. Målt fra venstre ytterkant, glipe mellom hvert bord og ingen
+     glipe utenfor ytterbordene. */
+  function fullRun(b, widths, g) {
+    var all = [b].concat(widths, [b]);
+    var arr = [], x = 0;
+    for (var i = 0; i < all.length; i++) {
+      arr.push({ left: x, w: all[i], end: i === 0 || i === all.length - 1 });
+      x += all[i] + g;
     }
     return arr;
   }
+
+  function runTotal(run) {
+    var last = run[run.length - 1];
+    return last.left + last.w;
+  }
+
+  /* Ved ytterkantmål er hele veggen med i regnestykket, så da er ytterbordene
+     helt vanlige bord. Ved senter–senter og lysåpning er de derimot de to
+     faste bordene du måler mellom. */
+  function countsEnds() { return state.mode === "outer"; }
 
   function compute() {
     var b = boardWidth();
@@ -770,16 +783,18 @@
     if (!d) return;
 
     var b = r.b, g = d.gap, n = d.n;
-    var pos = positions(d.widths, g);
-    var inner = d.widths.reduce(function (a, w) { return a + w; }, 0) + (n + 1) * g;
-    var total = 2 * b + inner;
+    var run = fullRun(b, d.widths, g);
+    var total = runTotal(run);
+    var allBoards = countsEnds();
     var H = 100;
 
     var svg = el("svg", {
       viewBox: "0 0 " + total + " " + H,
       preserveAspectRatio: "none",
       role: "img",
-      "aria-label": "Oppriss av veggen med " + n + " underbord mellom to faste bord"
+      "aria-label": allBoards
+        ? "Oppriss av veggen med " + (n + 2) + " underbord"
+        : "Oppriss av veggen med " + n + " underbord mellom to faste bord"
     });
 
     function board(x, w, fill, edge) {
@@ -791,29 +806,28 @@
       }));
     }
 
-    // underbord: fast + bordene mellom + fast
-    board(0, b, "var(--fixed)", "var(--fixed-edge)");
-    pos.forEach(function (p) {
+    run.forEach(function (p) {
+      var fixed = p.end && !allBoards;
       var narrow = p.w < b - EPS;
-      board(b + p.left, p.w, narrow ? "var(--board-alt)" : "var(--board)", "var(--board-edge)");
+      board(p.left, p.w,
+        fixed ? "var(--fixed)" : narrow ? "var(--board-alt)" : "var(--board)",
+        fixed ? "var(--fixed-edge)" : "var(--board-edge)");
     });
-    board(total - b, b, "var(--fixed)", "var(--fixed-edge)");
 
     // Overbord over hver glipe. Skyggen til høyre viser at overbordet
     // står 19 mm ut fra underbordet.
     var cov = d.cover;
-    var lx = b;
-    for (var j = 0; j <= n; j++) {
+    for (var j = 0; j < run.length - 1; j++) {
+      var gapStart = run[j].left + run[j].w;
       svg.appendChild(el("rect", {
-        x: lx - cov + r.o, y: 6, width: 19, height: H - 12,
+        x: gapStart - cov + r.o, y: 6, width: 19, height: H - 12,
         fill: "var(--shade)"
       }));
       svg.appendChild(el("rect", {
-        x: lx - cov, y: 6, width: r.o, height: H - 12,
+        x: gapStart - cov, y: 6, width: r.o, height: H - 12,
         fill: "var(--lekt)", stroke: "var(--lekt-edge)",
         "stroke-width": 1, "vector-effect": "non-scaling-stroke"
       }));
-      lx += g + (j < n ? d.widths[j] : 0);
     }
 
     // Målet du la inn, markert der det faktisk er tatt.
@@ -838,10 +852,12 @@
     bar.appendChild(lab);
     dimHost.appendChild(bar);
 
-    $("elev-cap").textContent =
-      n + " underbord mellom" + (d.n2 ? " (" + d.n2 + " kløyvd til " + fmt(d.b2, 0) + " mm)" : "") +
-      " · " + (n + 1) + " overbord · total bredde " +
-      fmt(total, 0) + " mm (inkl. de to faste bordene)";
+    var kloyvd = d.n2 ? " (" + d.n2 + " kløyvd til " + fmt(d.b2, 0) + " mm)" : "";
+    $("elev-cap").textContent = allBoards
+      ? (n + 2) + " underbord" + kloyvd + " · " + (n + 1) + " overbord · " +
+        "hele veggen " + fmt(total, 0) + " mm"
+      : n + " underbord mellom" + kloyvd + " · " + (n + 1) + " overbord · total bredde " +
+        fmt(total, 0) + " mm (inkl. de to faste bordene)";
   }
 
   function drawDetail(r) {
@@ -960,9 +976,14 @@
       return;
     }
 
-    positions(d.widths, d.gap).forEach(function (p, i) {
+    var run = fullRun(r.b, d.widths, d.gap);
+    var list = countsEnds() ? run : run.slice(1, -1);
+    var origin = countsEnds() ? 0 : r.b;
+
+    list.forEach(function (p) {
+      p = { left: p.left - origin, w: p.w };
       var row = document.createElement("tr");
-      var cells = [String(i + 1)];
+      var cells = [String(body.children.length + 1)];
       if (mixed) cells.push(fmt(p.w));
       cells.push(fmt(p.left), fmt(p.left + p.w / 2), fmt(p.left + p.w));
       cells.forEach(function (v, k) {
@@ -1018,9 +1039,15 @@
 
   function placementText(d) {
     if (!d.n2) return "";
-    if (d.n1 === 0) return "Alle bordene kløyves til samme bredde.";
-    if (d.n2 === 1) return "Det smale bordet står ytterst, inntil bordet i enden.";
-    if (d.n2 === 2) return "Ett smalt bord i hver ende, inntil de faste bordene.";
+    if (d.n1 === 0) return countsEnds()
+      ? "Alle bordene mellom ytterbordene kløyves til samme bredde; ytterbordene står i full bredde."
+      : "Alle bordene kløyves til samme bredde.";
+    if (d.n2 === 1) return countsEnds()
+      ? "Det smale bordet står nest ytterst, like innenfor ytterbordet."
+      : "Det smale bordet står ytterst, inntil bordet i enden.";
+    if (d.n2 === 2) return countsEnds()
+      ? "Ett smalt bord like innenfor hvert av ytterbordene."
+      : "Ett smalt bord i hver ende, inntil de faste bordene.";
     return "De smale bordene er fordelt jevnt utover veggen.";
   }
 
@@ -1063,12 +1090,14 @@
       var btn = document.createElement("button");
       btn.type = "button";
       var what = document.createElement("span");
+      // Ytterbordene holdes alltid i full bredde, så "alle" gjelder bordene
+      // mellom dem – det må komme fram når hele veggen er med i telling.
       what.textContent = f.k === "alle"
-        ? "Kløyv alle " + f.n + " bordene til " + fmt(f.width, 0) + " mm"
+        ? (countsEnds() ? "Kløyv de " + f.n + " midtre bordene til " : "Kløyv alle " + f.n + " bordene til ") + fmt(f.width, 0) + " mm"
         : "Kløyv " + f.cnt + " bord til " + fmt(f.width, 0) + " mm";
       var num = document.createElement("span");
       num.className = "num";
-      num.textContent = f.n + " bord · " + fmt(f.gap) + " mm glipe";
+      num.textContent = (countsEnds() ? f.n + 2 : f.n) + " bord · " + fmt(f.gap) + " mm glipe";
       btn.appendChild(what);
       btn.appendChild(num);
       btn.addEventListener("click", function () {
@@ -1114,18 +1143,22 @@
     $("fail").hidden = true;
     okBlock.hidden = false;
 
+    var allBoards = countsEnds();
+    var total = runTotal(fullRun(r.b, d.widths, d.gap));
+
     $("gap-num").textContent = fmt(d.gap);
-    $("s-count").textContent = d.n + " stk";
+    $("s-count-label").textContent = allBoards ? "Bord totalt" : "Bord mellom";
+    $("s-count").textContent = (allBoards ? d.n + 2 : d.n) + " stk";
     $("s-cc").textContent = d.n2 ? "varierer" : fmt(d.cc) + " mm";
     $("s-cover").textContent = fmt(d.cover) + " mm";
-    $("s-sum").textContent = fmt(r.clear, 0) + " mm";
+    $("s-sum").textContent = fmt(allBoards ? total : r.clear, 0) + " mm";
     $("stat-narrow").hidden = !d.n2;
     if (d.n2) $("s-narrow").textContent = d.n2 + " × " + fmt(d.b2, 0) + " mm";
 
-    $("mark-hint").textContent = d.n === 0
+    $("mark-hint").textContent = d.n === 0 && !allBoards
       ? "Ingen bord å merke ut."
-      : "Alle mål i mm fra innerkanten på startbordet. Mål fortløpende fra samme punkt – " +
-        "måler du bord for bord, samler feilen seg opp." +
+      : "Alle mål i mm fra " + (allBoards ? "venstre ytterkant" : "innerkanten på startbordet") +
+        ". Mål fortløpende fra samme punkt – måler du bord for bord, samler feilen seg opp." +
         (d.n2 ? " " + placementText(d)
               : " Måler du heller fra senter av startbordet, er senter på bord nr. i lik i × " +
                 fmt(d.cc) + " mm.");
